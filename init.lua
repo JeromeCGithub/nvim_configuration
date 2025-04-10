@@ -95,6 +95,15 @@ vim.g.have_nerd_font = true
 
 vim.opt.termguicolors = true
 
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = { 'json', 'jsonc' },
+  callback = function()
+    vim.bo.tabstop = 4
+    vim.bo.shiftwidth = 4
+    vim.bo.expandtab = true
+  end,
+})
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
@@ -147,7 +156,7 @@ vim.opt.splitbelow = true
 --  See `:help 'list'`
 --  and `:help 'listchars'`
 vim.opt.list = true
-vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.opt.listchars = { tab = '  ', trail = '·', nbsp = '␣' }
 
 -- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
@@ -174,6 +183,20 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+
+vim.keymap.set('n', '<leader>g', vim.diagnostic.open_float, { desc = 'Open diagnostic in floating window' })
+
+-- Set keymap to switch tabs in bufferline
+vim.keymap.set('n', 'gb', ':BufferLinePick<CR>', { noremap = true, silent = true })
+vim.keymap.set('n', '<leader>]', ':BufferLineCycleNext<CR>', {})
+vim.keymap.set('n', '<leader>[', ':BufferLineCyclePrev<CR>', {})
+
+vim.keymap.set('n', '<leader>1', ':qa<CR>', { desc = 'Quit nvim' })
+vim.keymap.set('n', '<leader>2', ':wa<CR>', { desc = 'Save all' })
+vim.keymap.set('n', '<leader>3', ':w<CR>', { desc = 'Save' })
+vim.keymap.set('n', '<leader>4', ':w<CR>', { desc = 'Quit' })
+
+vim.keymap.set('n', '<leader>gg', '<cmd>lua Snacks.lazygit()<CR>', {})
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -217,7 +240,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     vim.highlight.on_yank()
   end,
 })
-
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
@@ -276,6 +298,78 @@ require('lazy').setup({
         delete = { text = '_' },
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
+      },
+    },
+  },
+
+  -- plugin to select multiples lines easily
+  {
+    'mg979/vim-visual-multi',
+  },
+
+  -- markdown support
+  'plasticboy/vim-markdown',
+  'iamcco/markdown-preview.nvim',
+
+  -- Collection of cool plugins
+  {
+    'folke/snacks.nvim',
+    opts = {
+      indent = { enabled = true },
+      input = { enabled = true },
+      notifier = { enabled = true },
+      scope = { enabled = true },
+      scroll = { enabled = true },
+      statuscolumn = { enabled = false }, -- we set this in options.lua
+      words = { enabled = true },
+      lazygit = { enabled = true },
+
+      dashboard = {
+        preset = {
+          header = [[
+   $$$$$\                     $$$$$$$\  $$\  $$\     
+   \__$$ |                    $$  __$$\ \__| $$ |    
+      $$ | $$$$$$\  $$\   $$\ $$ |  $$ |$$\$$$$$$\   
+      $$ | \____$$\ $$ |  $$ |$$ |  $$ |$$ \_$$  _|  
+$$\   $$ | $$$$$$$ |$$ |  $$ |$$ |  $$ |$$ | $$ |    
+$$ |  $$ |$$  __$$ |$$ |  $$ |$$ |  $$ |$$ | $$ |$$\ 
+\$$$$$$  |\$$$$$$$ |\$$$$$$$ |$$$$$$$  |$$ | \$$$$  |
+ \______/  \_______| \____$$ |\_______/ \__|  \____/ 
+                    $$\   $$ |                       
+                    \$$$$$$  |                       
+                     \______/                        
+]],
+        },
+        sections = {
+          { section = 'header' },
+          {
+            pane = 2,
+            section = 'terminal',
+            -- Require colorscript package
+            cmd = 'colorscript -e square',
+            height = 5,
+            padding = 1,
+          },
+          { section = 'keys', gap = 1, padding = 1 },
+          { pane = 2, icon = ' ', title = 'Recent Files', section = 'recent_files', indent = 2, padding = 1 },
+          { pane = 2, icon = ' ', title = 'Projects', section = 'projects', indent = 2, padding = 1 },
+          {
+            pane = 2,
+            icon = ' ',
+            title = 'Git Status',
+            section = 'terminal',
+            enabled = function()
+              local Snacks = require 'snacks'
+              return Snacks.git.get_root() ~= nil
+            end,
+            cmd = 'git status --short --branch --renames',
+            height = 5,
+            padding = 1,
+            ttl = 5 * 60,
+            indent = 3,
+          },
+          { section = 'startup' },
+        },
       },
     },
   },
@@ -687,6 +781,9 @@ require('lazy').setup({
         cmake = {},
         clangd = {},
 
+        jsonls = {
+          filetype = { 'json', 'jsonc' },
+        },
         lua_ls = {
           -- cmd = { ... },
           -- filetypes = { ... },
@@ -1010,7 +1107,13 @@ require('lazy').setup({
     'akinsho/bufferline.nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     config = function()
-      require('bufferline').setup {}
+      require('bufferline').setup {
+        options = {
+          pick = {
+            alphabet = '1234567890qwertyuiopasdfghjklzxcvbnm',
+          },
+        },
+      }
     end,
   },
 
